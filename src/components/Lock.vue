@@ -1,26 +1,24 @@
 <template>
-	<div id="lock" 
+	<div class="lock" 
         :title="locked ? 'locked' : 'unlocked'"
         :alt="locked ? 'locked' : 'unlocked'">
-        <b-form-checkbox button             
+        <b-form-checkbox button
+			size="sm"
 			:checked="value" 
             @input="changed"
 			:disabled="disabled"
-            :button-variant="locked ? 'success' : 'danger'"
-            class="shadow" 
-            style="{ cursor: 'pointer' }">
+			:button-variant="locked ? 'success' : 'danger'"
+			class="shadow">
             <b-icon-lock-fill v-if="locked"/>
             <b-icon-unlock-fill v-else/> 
         </b-form-checkbox>        
-    </div><!--v-model="locked" @change="changed" -->
+   	</div>
 </template>
 
 <script>
+import { ref, computed } from '@vue/composition-api' // Vue 2 only. for Vue 3 use "from '@vue'"
 
 export default {
-	name: 'Lock',
-	components: { },
-	mixins: [ ],
 	props: {
 		disabled: {
             type: Boolean,
@@ -29,32 +27,23 @@ export default {
         },  
 		value: {
 			type: Boolean,
-			required: true
+			required: false,
+			default: true
 		}
 	},
-	data() {
-		return {}
-	},
-	computed: {
-		locked: {
-			get() { return this.value },
-			set(value) { this.$emit('input', value) }
+	setup(props, context) {
+		const locked = ref(props.value) 
+		
+		const changed = (newValue) => {
+			locked.value = newValue 
+			context.emit('input', newValue) 
 		}
-	},
-	methods: {
-		changed(value) { this.locked = value }
-    },
-	// lifecycle hooks
-	beforeCreate() {},
-	created() {},
-	beforeMount() {},
-	mounted() {},
-	beforeUpdate() {},
-	updated() {},
-	beforeDestroy() {},
-	destroyed() {}
+
+		return { locked, changed }
+	}
 }
 </script>
 
 <style scoped>
+	.lock { cursor: pointer }
 </style>

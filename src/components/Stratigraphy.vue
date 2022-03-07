@@ -1,156 +1,145 @@
 <template>
 <div>
-    <b-form-group label="Stratigraphy">		
+    <b-form-group label="Stratigraphy" class="border m-0 p-1 shadow">		
 		<b-form-row>
 			<b-col>
 				<b-form-group label="Source context">
-					<b-form-input text 
-						:disabled="true"
-						class="shadow-sm" 
-						placeholder="source" 
-						type="text"
-						name="itemID" 
-						:value="$store.getters.nodeLabel(sourceID)"/>
-						<!--v-model.trim="((selectedItem || {}).data || {}).id"/>-->
-				</b-form-group>
+					<vue-bootstrap-typeahead 
+						size="sm"
+						:disabled="disabled"
+						:data="nodeOptions" 
+						:serializer="item => item.text"
+						:minMatchingChars="1"
+						:maxMatches="5"
+						v-model="sourceID"
+						@hit="sourceSelected">						
+					</vue-bootstrap-typeahead>
+				</b-form-group>	
 			</b-col>
 			<b-col>	
 				<b-form-group label="Relationship">	
 					<b-form-select 
-						:disabled="this.disabled"
+						size="sm"
+						:disabled="disabled"
 						name="edgeTypeSelector" 
 						class="shadow-sm"                
 						placeholder="relationship"
-						v-model="selectedEdgeType"
-						:options="edgeTypes.map(t => { return { value: t, text: t } })"/>
+						v-model="edgeType"
+						:options="edgeOptions"/>
 				</b-form-group>					
 			</b-col>
 			<b-col>
-				<b-form-group label="Target context">	
-					<ItemLookup
-						label=""
-						:disabled="disabled" 
-						:optionNone="false"					
-						:options="available"
-						placeholder="target"
-						v-model="selectedTargetID"
-						@change="targetChanged"/>
-				</b-form-group>	
+				<b-form-group label="Target context">
+					<vue-bootstrap-typeahead 
+						size="sm"
+						:data="nodeOptions"
+						:serializer="item => item.text"
+						:minMatchingChars="1"
+						:maxMatches="5"
+						v-model="targetID"							
+						@hit="targetSelected"/>
+				</b-form-group>									
 			</b-col>
-			<b-col>	
-				<b-form-group label=".">			
-				<b-button pill
-					size="sm"
-					:disabled="disabled || sourceID == ''" 
-					variant="outline-primary"
-					class="text-left shadow" 
-					title="add" 
-					alt="add"			
-					@click.stop="addItem">
-					<b-icon-plus />
-					<span>Add relationship</span>
-				</b-button>
-				</b-form-group>
-			</b-col>
+			<b-col>	</b-col>
 		</b-form-row>
 		<b-form-row>
-			<b-col v-for="edgeType in edgeTypes" :key="edgeType"  class="border">
-				<b-form-group :label="capitalize(edgeType)">					
-					<ul class="list-inline d-inline-block m-1" name="lst">
-						<li v-for="item in items(edgeType)" :key="item.id" class="list-inline-item">
-							<b-badge
-								:title="item.id"
-								class="bg-white text-dark border border-secondary shadow-sm"
-								:disabled="disabled">
-								<!--<span>{{ $store.getters.nodeByID(item.data.target).data.label || item.data.target }}</span>-->
-								<span>{{ $store.getters.nodeLabel(item.data.target) }}</span>
-								<b-icon-x-circle class="action ml-2" @click.stop="removeItem(item)"/>
-							</b-badge>
-						</li>
-					</ul>					
-				</b-form-group>				
+			<b-col class="text-center">
+				<NodeIconLink :nodeID="sourceID"/>
 			</b-col>
-			<b-col></b-col>
+			<b-col class="text-center">
+				<span>{{ edgeType}}</span>							
+			</b-col>
+			<b-col class="text-center">
+				<NodeIconLink :nodeID="targetID"/>
+			</b-col>
+			<b-col>
+				<b-form-group>
+					<b-button pill
+						size="sm"
+						:disabled="!addEnabled" 
+						variant="primary"
+						class="text-left shadow" 
+						title="add" 
+						alt="add"							
+						@click.stop="addItem">
+						<b-icon-plus />
+						<span>Add relationship</span>
+					</b-button>	
+				</b-form-group>		
+			</b-col>
 		</b-form-row>		
 	</b-form-group>
 </div>
 </template>
 
 <script>
-import PhaserCommon from '@/mixins/PhaserCommon.js'
+import { ref, unref, computed, inject } from '@vue/composition-api' // Vue 2 only. for Vue 3 use "from '@vue'"
 import ItemLookup from '@/components/ItemLookup'
+import NodeIconLink from '@/components/NodeIconLink'
+import { EdgeType } from '@/composables/PhaserCommon'
+import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
+// Don't forget to include the Bootstrap CSS/SCSS files!
+//import 'bootstrap/scss/bootstrap.scss'
 
 export default {
-	name: 'Stratigraphy2',
-	components: { ItemLookup },
-	mixins: [ PhaserCommon ],
+	components: { 
+		ItemLookup, 
+		VueBootstrapTypeahead, 
+		NodeIconLink 
+	},
+	//mixins: [ PhaserCommon ],
 	props: {
 		disabled: {
 			type: Boolean,
 			required: false,
 			default: false
-		},
-		sourceID: {
-			type: String,
-			required: false,
-			default: ""
 		}
 	},
-	data() {
+	setup(props) {
+		const store = inject('store')		
+		const sourceID = ref(null)
+		const targetID = ref(null)
+		const edgeType = ref(EdgeType.ABOVE)
+
+		const addEnabled = computed(() => props.disabled == false 
+			&& sourceID.value !== targetID.value 			
+			&& store.getters.isNode(sourceID.value) 
+			&& store.getters.isNode(targetID.value)
+			&& Object.values(EdgeType).includes(edgeType.value) 			
+		)
+		
+		const sourceSelected = (item) => { sourceID.value = item.value }
+		const targetSelected = (item) => { targetID.value = item.value }
+		
+		const nodeOptions = computed(() => store.getters.contexts
+        	.map(n => { return { value: n.data.id, text: n.data.label }})
+        	.sort((a, b) => a.text > b.text ? 1 : -1))
+
+		// don't allow creation of 'below' relationship, only 'ABOVE' or 'EQUAL'
+		const edgeOptions = [EdgeType.ABOVE, EdgeType.EQUAL] //Object.values(EdgeType)
+			.map(t => { return { value: t, text: t } })		
+		
+		const addItem = () => {
+			let edge = store.getters.newEdge()
+			edge.data.source = sourceID.value
+			edge.data.target = targetID.value
+			edge.data.type =  edgeType.value		
+			store.dispatch('updateEdge', edge)			
+		}		
+
 		return {
-			edgeTypes: ["above", "below", "equal"],
-			selectedTargetID: "",	
-			selectedEdgeType: "above"		
+			store,
+			addEnabled,
+			nodeOptions,
+			edgeOptions, 
+			addItem,
+			sourceID,
+			targetID, 
+			edgeType,
+			sourceSelected,
+			targetSelected
 		}
-	},
-	computed: {
-		strat() { return this.$store.getters.edgesBySource(this.sourceID) },
-		above() { return this.strat.filter(e => e.data.type == "above") },
-		below() { return this.strat.filter(e => e.data.type == "below") },
-		equal() { return this.strat.filter(e => e.data.type == "equal") },
-		options() { return this.$store.getters.contextOptionsGrouped },	
-		available() { 
-			// target IDs for strat relationships. Exclude existing targets or current source ID
-			const currentTargets = this.strat.map(item => item.data.target).concat([this.sourceID])
-			const currentOptions = this.options.length > 0 ? this.options[0].options || [] : []			
-			return currentOptions.filter(option => !currentTargets.includes(option.value))			
-		}
-	},
-	methods: {
-		items(edgeType){
-			switch(edgeType) {
-				case "above": return this.above
-				case "below": return this.below
-				case "equal": return this.equal
-				default: return []
-			}
-		},
-		addItem() {			
-			let edge = { 
-				data: { 
-					source: this.sourceID, 
-					target: this.selectedTargetID, 
-					type: this.selectedEdgeType 
-				} 
-			}
-			this.$store.dispatch('insertEdge', edge)	
-		},
-		removeItem(item) {
-			this.$store.dispatch('deleteEdge', item)			
-		},
-		targetChanged(value) {
-			this.selectedTargetID = value			
-		}
-	},
-	// lifecycle hooks
-	beforeCreate() {},
-	created() {},
-	beforeMount() {},
-	mounted() {},
-	beforeUpdate() {},
-	updated() {},
-	beforeDestroy() {},
-	destroyed() {}
+	}
 }
 </script>
 

@@ -40,7 +40,7 @@
         :dating="dating"
         @change="datingChanged"/>
 
-	<DatingYearRange v-else
+	<DatingYearRangeCE v-else
         :disabled="disabled"
         :dating="dating"
         @change="datingChanged"/>
@@ -48,19 +48,14 @@
 </template>
 
 <script>
-import PhaserCommon from '@/mixins/PhaserCommon.js'
-import DatingYearRange from '@/components/DatingYearRange.vue'
-import SciDatingFields from '@/components/SciDatingFields.vue'
-//import DatingPeriod from '@/components/DatingPeriod.vue'
+import DatingYearRangeCE from '@/components/DatingYearRangeCE'
+import SciDatingFields from '@/components/SciDatingFields'
 
 export default {
-	name: 'Dating',
 	components: {
-		DatingYearRange,
-		SciDatingFields
-        //DatingPeriod
+		DatingYearRangeCE,
+		SciDatingFields        
 	},
-	mixins: [ PhaserCommon ],
 	props: {
 		disabled: {
 			type: Boolean,
@@ -73,33 +68,18 @@ export default {
 			default: null
 		},		
 	},
-	data() {
-		return {}
-	},
-	computed: {},
-	methods: {
-        datingChanged(newValue){
-			this.$emit('change', newValue)
-		},
-		checkboxChanged(value) {
-			if(this.dating) {
-				let d = Object.assign({}, this.dating)
+	setup(props, context) {
+		const datingChanged = (newValue) => context.emit('change', newValue)
+		
+		const checkboxChanged = (value) => {
+			if(props.dating) {
+				let d = Object.assign({}, props.dating)
 				d.isSciDating = value
-				this.datingChanged(d)
+				datingChanged(d)
 			}
-		}		
-    },
-	// lifecycle hooks
-	beforeCreate() {},
-	created() {},
-	beforeMount() {},
-	mounted() {},
-	beforeUpdate() {},
-	updated() {},
-	beforeDestroy() {},
-	destroyed() {}
+		}
+		
+		return { datingChanged, checkboxChanged }
+    }
 }
 </script>
-
-<style scoped>
-</style>

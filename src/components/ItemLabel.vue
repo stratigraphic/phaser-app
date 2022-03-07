@@ -1,27 +1,29 @@
 <template>
 	<b-form-group
 		:label="label" 
-		label-for="itemLabel">	
+		label-for="itemLabel"
+		label-size="md">	
 		<b-form-input text 
-            :id="uniqueId"
+			size="sm"
+            :id="identifier"
 			:disabled="disabled"
             :placeholder="placeholder"
             :value="value"
             class="shadow-sm"		
 			type="text"
 			name="itemLabel"            
-			autocomplete="off"  
+			autocomplete="off"
+			variant="primary"
             @input="changed"/>
 	</b-form-group>
 </template>
 
 <script>
-import _uniqueId  from 'lodash/uniqueId'
+//import _uniqueId  from 'lodash/uniqueId'
+import { computed } from '@vue/composition-api' // Vue 2 only. for Vue 3 use "from '@vue'"
+import _uniqueId from 'lodash/uniqueId'
 
 export default {
-	name: 'ItemLabel',
-	components: { },
-	mixins: [ ],
 	props: {
         id: {
             type: String,
@@ -49,30 +51,11 @@ export default {
 			default: "Identifier"
         }
 	},
-	data() {
-		return { }
-	},
-	computed: { 
-        uniqueId() {
-            return this.id || _uniqueId("itemlabel-")
-        },   
-    },
-	methods: {
-        changed(value) {
-            this.$emit('input', value)
-        }
-    },
-	// lifecycle hooks
-	beforeCreate() {},
-	created() {},
-	beforeMount() {},
-	mounted() {},
-	beforeUpdate() {},
-	updated() {},
-	beforeDestroy() {},
-	destroyed() {}
+	setup(props, context) {
+		const identifier = computed(() => props.id || _uniqueId("itemlabel-"))
+		const changed = (value) => context.emit('input', value)
+		
+		return { identifier, changed }
+	}	
 }
 </script>
-
-<style scoped>
-</style>

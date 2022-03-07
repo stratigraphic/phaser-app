@@ -110,12 +110,9 @@
 </template>
 
 <script>
-import PhaserCommon from '@/mixins/PhaserCommon.js'
+import { computed } from '@vue/composition-api' // Vue 2 only. for Vue 3 use "from '@vue'"
 
 export default {
-	name: 'SciDating',
-	components: {},
-	mixins: [ PhaserCommon ],
 	props: {
         disabled: {
             type: Boolean,
@@ -128,43 +125,30 @@ export default {
 			default: null
         }    
     },
-	data() {
-		return {}
-	},
-	computed: {
-        local() {
+    setup(props, context) {
+        const local = computed(() => {
+            const dating = (props.dating || {})
             return {
-                minYear: Number((this.dating || {}).minYear),  
-                maxYear: Number((this.dating || {}).maxYear),  
-                minYearTolValue: Number((this.dating || {}).minYearTolValue || 0),  
-                maxYearTolValue: Number((this.dating || {}).maxYearTolValue || 0),  
-                minYearTolUnit: (this.dating || {}).minYearTolUnit || "years",
-                maxYearTolUnit: (this.dating || {}).maxYearTolUnit || "years",
-                minYearSigma: (this.dating || {}).minYearSigma || "",
-                maxYearSigma: (this.dating || {}).maxYearSigma || "",
-                label: (this.dating || {}).label || "",
-                labCode: (this.dating || {}).labCode || "",
-                sampleCode: (this.dating || {}).sampleCode || "",
-                errorValue: (this.dating || {}).errorValue || "",
+                minYear: Number(dating["minYear"] || null),  
+                maxYear: Number(dating["maxYear"] || null),  
+                minYearTolValue: Number(dating["minYearTolValue"] || 0),  
+                maxYearTolValue: Number(dating["maxYearTolValue"] || 0),  
+                minYearTolUnit: dating["minYearTolUnit"] || "years",
+                maxYearTolUnit: dating["maxYearTolUnit"] || "years",
+                minYearSigma: dating["minYearSigma"] || "",
+                maxYearSigma: dating["maxYearSigma"] || "",
+                label: dating["label"] || "",
+                labCode: dating["labCode"] || "",
+                sampleCode: dating["sampleCode"] || "",
+                errorValue: dating["errorValue"] || "",
             }
-        }, 
-    },
-	methods: {
-        changed(key, value) {        
-            this.$emit('change', { ...this.dating, [key]: value })
-        }
-    },
-	// lifecycle hooks
-	beforeCreate() {},
-	created() {},
-	beforeMount() {},
-	mounted() {},
-	beforeUpdate() {},
-	updated() {},
-	beforeDestroy() {},
-	destroyed() {}
+        })
+        
+        const changed = (key, value) => context.emit('change', { ...props.dating, [key]: value })
+       
+        return { local, changed }
+    }
 }
 </script>
 
-<style scoped>
 

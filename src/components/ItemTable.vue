@@ -1,63 +1,104 @@
 <template>
     <b-container fluid class="p-0">
+		<b-overlay :show="isBusy" rounded="sm">
 		<b-row align-h="between">			
 			<b-col>
-				<b-button pill
-					v-if="itemClass !== 'edge'"
+				<b-button pill v-if="itemClass !== 'edge'"					
 					size="sm"
-					variant="outline-primary"
+					variant="primary"
 					class="text-left shadow" 
 					:title="`add ${itemClass}`" 
 					:alt="`add ${itemClass}`"			
 					@click.stop="insertItem()">
 					<b-icon-plus />Add {{ itemClass }}</b-button>
+				<b-button 
+                    pill
+                    size="sm"
+                    class="m-1 shadow"
+                    variant="primary" 
+                    type="reset"
+                    title="Copy table to clipboard" 
+                    alt="Copy table to clipboard"	 
+                    :disabled="items.length == 0" 
+                    @click="copyToClipboard"> 
+                    <b-icon-clipboard-plus class="mr-2" />
+					<span>Copy to clipboard</span>
+				</b-button>
 			</b-col>
 			<b-col>
 				<b-form-group
-					label="Filter"
-					label-for="filter-input"
+					class="mr-1"
 					label-cols-sm="3"
 					label-align-sm="right"
-					label-size="sm"
-					class="mb-2">
+					label-size="sm">
 					<template v-slot:label>
-						<b-icon-search />
+						<b-icon-funnel/>
 					</template>
 					<b-form-input 
-						size="md"
+						size="sm"
 						id="filter-input"
 						class="shadow-sm"
+						:disabled="items.length == 0" 
 						v-model="filter"
 						type="search"
 						autocomplete="off"
-						:placeholder="`filter ${itemClass} records`"/>					
+						:placeholder="`filter ${itemClass} records`"/>	
+					<div class="text-secondary">Showing {{ filterCount }} of {{ items.length }} records</div>				
 				</b-form-group>
 			</b-col>
 		</b-row>
 		<b-row>
 			<b-col>
-				<b-table show-empty style="height: 250px;"
-					id="datatable"
-					sort-icon-left
-					hover outlined selectable small 
+				<b-table show-empty sort-icon-left hover outlined selectable small
+					style="height: 200px;"
+					:id="`datatable-${itemClass}`"										
 					:no-border-collapse="true"
-					sticky-header="300px" 
+					sticky-header="200px" 
 					select-mode="single"
-					primary-key="id"
+					primary-key="data.id"
+					:per-page="perPage"
+					:current-page="currentPage"
 					:items="items" 
 					:fields="fields"
 					:filter="filter"
+					@filtered="onFiltered"
 					class="overflow-auto shadow-sm"
-					@row-selected="rowSelected">
+					@row-selected="rowSelected"
+					:tbody-tr-class1="rowClass">
+
 					<template #cell(actions)="row">
 						<div class="text-right">
 							<b-icon-x-circle width="15" height="15"
 								class="action mr-2" 
-								:title="`delete ${itemClass} ${row.item.data.label}`" 
-								:alt="`delete ${itemClass}`"							
+								:title="`delete ${itemClass} ${row.item.data.label || '' }`" 
+								:alt="`delete ${itemClass} ${row.item.data.label || '' }`"
 								@click.stop="deleteItem(row.item)"/>		
 						</div>				
 					</template>					
+										
+					<template #cell(label)="row">
+						<NodeIconLink :nodeID="row.item.data.id"/>
+					</template>	
+
+					<template #cell(period)="row">
+						<NodeIconLink :nodeID="row.item.data.period"/>
+					</template>	
+
+					<template #cell(source)="row">
+						<NodeIconLink :nodeID="row.item.data.source"/>
+					</template>
+
+					<template #cell(target)="row">
+						<NodeIconLink :nodeID="row.item.data.target"/>
+					</template>	
+
+					<template #cell(parent)="row">
+						<NodeIconLink :nodeID="row.item.data.parent"/>						
+					</template>	
+
+					<template #cell(included)="row">
+						<TickOrCross :value="row.item.data.included"/>						
+					</template>				
 				</b-table>
 				<!--<div class="text-right">
 					<b-icon-plus-circle
@@ -68,179 +109,268 @@
 				</div>-->
 			</b-col>
 		</b-row>
+		</b-overlay>
+		<b-row>
+			<b-col>
+				<b-pagination
+					v-model="currentPage"
+					:total-rows="filterCount"
+					:per-page="perPage"
+					aria-controls="my-table"
+					:first-number="true"
+					:last-number="true"/>
+					<!--<p class="mt-3">Current Page: {{ currentPage }}</p>-->
+			</b-col>
+		</b-row>		
 	</b-container>
-	
 </template>
 
 <script>
-import PhaserCommon from '@/mixins/PhaserCommon.js'
-import {NodeClass} from '@/mixins/constants.js'
+import _merge from "lodash/merge"
+import Papa from "papaparse"
+import { ref, unref, computed, watch, inject, nextTick } from '@vue/composition-api' // Vue 2 only. for Vue 3 use "from '@vue'"
+import { NodeClass, EdgeClass } from '@/composables/PhaserCommon'
+import NodeIconLink from '@/components/NodeIconLink'
+import TickOrCross from '@/components/TickOrCross'
 
 export default {
-	name: 'ItemTable',
-	components: { },
-	mixins: [ PhaserCommon ],
-	props: {		
+	components: { NodeIconLink, TickOrCross },
+	props: {
+		selectedID: {
+			type: String,
+			required: false,
+			default: "",
+		},		
 		itemClass: {
 			type: String,
 			required: false,
 			default: NodeClass.PHASE,
-			validator: value => [...Object.values(NodeClass), "edge"].includes(value)
+			validator: value => [...Object.values(NodeClass), ...Object.values(EdgeClass)].includes(value)
 		}
 	},
-	data() { 
-		return {			
-			filter: "",
-			selectedID: "",
-			sortBy: "data.label",
-			sortDesc: false			
-		}
-	},
-	computed: {
-		items() {
-			switch(this.itemClass) {
-				case NodeClass.PHASE:
-					return this.$store.getters.phases
-				case NodeClass.GROUP:
-					return this.$store.getters.groups
-				case NodeClass.SUBGROUP:
-					return this.$store.getters.subgroups
-				case NodeClass.CONTEXT:
-					return this.$store.getters.contexts
-				case NodeClass.FIND:
-					return this.$store.getters.finds
-				case NodeClass.SAMPLE:
-					return this.$store.getters.samples
-				case NodeClass.DATING:
-					return this.$store.getters.datings
-				case NodeClass.PERIOD:
-					return this.$store.getters.periods
-				case "edge":
-					return this.$store.getters.edges
-				default:
-					return []
+	setup(props, context) {
+		const store = inject('store')
+		const filter = ref("")
+		const onFiltered = (items, count) => filterCount.value = count
+		const sortBy = ref("data.label")
+		const sortDesc = ref(false)
+		const perPage = 25
+		const currentPage = ref(1)
+		const isBusy = ref(false) // not used yet
+
+		// select row if node is selected somewhere else in the app (e.g. on the diagram)
+		//const selectedID = computed(() => store.getters.selectedID)
+		const selectedID1 = computed(() => props.selectedID)
+        watch(selectedID1, async (newValue) => {	
+			await nextTick() // helps to ensure subsequent scrolling works
+			// scroll to ensure selected row is visible in the table
+			let el = document.getElementById(`datatable-${props.itemClass}__row_${newValue}`)			
+			if(el) { 
+				el.click() // simulates a click on the row to highlight
+				el.scrollIntoView({behavior: "smooth", block: "center", inline: "nearest"}) // scroll the selected row 
+				el.scrollIntoViewIfNeeded(true)	// (TODO: should only do this if manually clicked?)
 			}
-		},			
-		columns() { 
-			switch(this.itemClass) {
+        })
+		
+		// colour coding selected row
+        const rowClass = (item, type) => {
+			if (!item || type !== 'row') 
+                return ""
+			else            
+            	return item.data.id == selectedID1.value ? "selected-row" : ""    
+        }
+ 
+		const items = computed(() => {			
+			switch(props.itemClass) {
+				case NodeClass.PHASE: return store.getters.phases
+				case NodeClass.GROUP: return store.getters.groups
+				case NodeClass.SUBGROUP: return store.getters.subgroups
+				case NodeClass.CONTEXT: return store.getters.contexts
+				case NodeClass.DATING: return store.getters.datings
+				case NodeClass.PERIOD: return store.getters.periods
+				case EdgeClass.EDGE: return store.getters.edges
+				default: return []				
+			}
+		})	
+
+		const rowCount = computed(() => items.value.length)
+		const filterCount = ref(items.value.length)         
+		watch(rowCount, (newValue) =>  filterCount.value = newValue)
+		
+
+		const columns = computed(() => { 
+			switch(props.itemClass) {
 				case NodeClass.PHASE: return ["label", "enteredMinYear", "enteredMaxYear", "enteredDiff", "derivedMinYear", "derivedMaxYear", "duration", "period"]
 				case NodeClass.GROUP: return ["label", "type", "parent", "derivedMinYear", "derivedMaxYear", "duration", "period"]
 				case NodeClass.SUBGROUP: return ["label", "type", "parent", "derivedMinYear", "derivedMaxYear", "duration", "period"]
 				case NodeClass.CONTEXT: return ["label", "type", "parent", "derivedMinYear", "derivedMaxYear", "duration", "period"]	
 				case NodeClass.DATING: return ["label", "type", "parent", "enteredMinYear", "enteredMaxYear", "enteredDiff", "included", "period"]
 				case NodeClass.PERIOD: return ["label", "enteredMinYear", "enteredMaxYear", "enteredDiff"]
-				case "edge": return ["source", "type", "target", "derivedMinYear", "derivedMaxYear", "duration"]
-				default: return []				
+				case EdgeClass.EDGE: return ["source", "type", "target", "derivedMinDuration", "derivedMaxDuration"]
+				default: return []
 			}			
-		},
-		fields() {
-			return [				
-				/*{
-					key: "data.id",
-					label: "id",
-					sortable: true					
-				},*/
+		})
+
+		const copyToClipboard = () => {
+			let data = unref(items).map(item => {                
+				let row = {}
+
+				unref(columns).forEach(col =>{
+					switch(col) {
+						case "label": row[col] = item.data.label; break;
+						case "period": row[col] = store.getters.labelByID(item.data.period); break;
+						case "source": row[col] = store.getters.labelByID(item.data.source); break;
+						case "target": row[col] = store.getters.labelByID(item.data.target); break;
+						case "type": row[col] = item.data.type; break;
+						case "parent": row[col] = store.getters.labelByID(item.data.parent); break;
+						case "enteredMinYear": row[col] = tableMinYearFormat(null, null, item); break;
+						case "enteredMaxYear": row[col] = tableMaxYearFormat(null, null, item); break;
+						case "enteredDiff": row[col] = enteredDiffFormat(null, null, item); break;
+						case "derivedMinYear": row[col] = derivedMinYearFormat(null, null, item); break;
+						case "derivedMaxYear": row[col] = derivedMaxYearFormat(null, null, item); break;
+						case "duration": row[col] = durationFormat(null, null, item); break;
+						case "derivedMinDuration": row[col] = derivedMinDurationFormat(null, null, item); break;
+						case "derivedMaxDuration": row[col] = derivedMaxDurationFormat(null, null, item); break;
+						case "included": row[col] = item.data.included; break;
+					}
+				})						
+				return row
+			})
+			let tsv = Papa.unparse(JSON.stringify(data), { delimiter: "\t" })            
+            navigator.clipboard.writeText(tsv)
+		}
+
+		const fields = computed(() => {
+			return [					
 				// displaying label as if identifier
-				... (this.columns.includes('label')) ? [{
-					key: "data.label",
-					label: "id",
-					sortable: true					
+				... (columns.value.includes('label')) ? [{
+					key: "label",
+					label: "identifier",
+					sortable: true,
+					sortByFormatted: true,
+					formatter: (value, key, item) => `${item.data.class}${item.data.label}`,					
 				}] : [],
-				... (this.columns.includes('period')) ? [{
+				... (columns.value.includes('period')) ? [{
 					// virtual column with custom formatter
 					key: 'period',
 					label: 'period',
+					sortable: true,
 					sortByFormatted: true,
-					formatter: this.tablePeriodFormatter,
+					formatter: (value, key, item) => store.getters.labelByID(item.data.period),
 					sortable: true					
 				}] : [],
-				... (this.columns.includes('source')) ? [{
+				/*... (columns.value.includes('source')) ? [{
 					key: "data.source",
 					label: "source",
 					sortByFormatted: true,
-					formatter: this.tableSourceIdFormatter,
+					formatter: tableSourceIdFormatter,
 					sortable: true					
+				}] : [], */
+				... (columns.value.includes('source')) ? [{
+					key: "source",
+					label: "source",
+					sortable: true,
+					sortByFormatted: true,
+					formatter: (value, key, item) =>  store.getters.labelByID(item.data.source),						
 				}] : [],  
-				... (this.columns.includes('type')) ? [{
+				... (columns.value.includes('type')) ? [{
 					key: "data.type",
 					label: "type",
 					sortable: true					
 				}] : [],  
-				... (this.columns.includes('target')) ? [{
-					key: "data.target",
+				... (columns.value.includes('target')) ? [{
+					key: "target",
 					label: "target",
+					sortable: true,
 					sortByFormatted: true,
-					formatter: this.tableTargetIdFormatter,
-					sortable: true					
-				}] : [],   
-				... (this.columns.includes('parent')) ? [{
-					key: "data.parent",
+					formatter: (value, key, item) => store.getters.labelByID(item.data.target),					
+				}] : [], 				
+				... (columns.value.includes('parent')) ? [{
+					key: "parent",
 					label: "within",
+					sortable: true,
 					sortByFormatted: true,
-					formatter: this.tableParentFormatter,
-					sortable: true					
+					formatter: (value, key, item) => `${store.getters.classByID(item.data.parent)}${store.getters.labelByID(item.data.parent)}`,					
                 }] : [],                
-				... (this.columns.includes('enteredMinYear')) ? [{
+				... (columns.value.includes('enteredMinYear')) ? [{
 					// virtual column with custom formatter
 					key: 'minyear',
 					label: 'entered min year',
 					sortByFormatted: true,
-					formatter: this.tableMinYearFormatter,
+					formatter: tableMinYearFormat,
 					sortable: true,
 					class: "text-right"
 				}] : [],
-				... (this.columns.includes('enteredMaxYear')) ? [{
+				... (columns.value.includes('enteredMaxYear')) ? [{
 					// virtual column with custom formatter
 					key: 'maxyear',
 					label: 'entered max year',
 					sortByFormatted: true,
-					formatter: this.tableMaxYearFormatter,
+					formatter: tableMaxYearFormat,
 					sortable: true,
 					class: "text-right"
 					}] : [],
-				... (this.columns.includes('enteredDiff')) ? [{
+				... (columns.value.includes('enteredDiff')) ? [{
 					// virtual column with custom formatter
 					key: 'entereddiff',
 					label: 'duration',
 					sortByFormatted: true,
-					formatter: this.enteredDiffFormatter,
+					formatter: enteredDiffFormat,
 					sortable: true,
 					class: "text-right"
 				}] : [],				
-				... (this.columns.includes('derivedMinYear')) ? [{
+				... (columns.value.includes('derivedMinYear')) ? [{
 					// virtual column with custom formatter
 					key: 'derivedminyear',
 					label: 'derived min year',
 					sortByFormatted: true,
-					formatter: this.derivedMinYearFormatter,
+					formatter: derivedMinYearFormat,
 					sortable: true,
 					class: "text-right"
-				}] : [],
-				
-				... (this.columns.includes('derivedMaxYear')) ? [{
+				}] : [],				
+				... (columns.value.includes('derivedMaxYear')) ? [{
 					// virtual column with custom formatter
 					key: 'derivedmaxyear',
 					label: 'derived max year',
 					sortByFormatted: true,
-					formatter: this.derivedMaxYearFormatter,
+					formatter: derivedMaxYearFormat,
 					sortable: true,
 					class: "text-right"
 				}] : [],
-				... (this.columns.includes('duration')) ? [{
+				... (columns.value.includes('duration')) ? [{
 					// virtual column with custom formatter
 					key: 'duration',
 					label: 'duration',
 					sortByFormatted: true,
-					formatter: this.durationFormatter,
+					formatter: durationFormat,
+					sortable: true,
+					class: "text-right"
+				}] : [],
+				... (columns.value.includes('derivedMinDuration')) ? [{
+					// virtual column with custom formatter
+					key: 'derivedminduration',
+					label: 'min duration',
+					sortByFormatted: true,
+					formatter: derivedMinDurationFormat,
 					sortable: true,
 					class: "text-right"
 				}] : [],				
-				... (this.columns.includes('included')) ? [{
-						key: "data.included",
-						label: "included",	
-						formatter: value => value ? "✓" : "✗",				
-						sortable: true,
-						class: "text-center"				
+				... (columns.value.includes('derivedMaxDuration')) ? [{
+					// virtual column with custom formatter
+					key: 'derivedmaxduration',
+					label: 'max duration',
+					sortByFormatted: true,
+					formatter: derivedMaxDurationFormat,
+					sortable: true,
+					class: "text-right"
+				}] : [],				
+				... (columns.value.includes('included')) ? [{
+					key: "included",
+					label: "included",	
+					sortable: true,
+					class: "text-center",
+					sortByFormatted: true,
+					formatter: (value, key, item) => item.data.included				
 				}] : [],     
 				/*{
 					key: "data.dating.minYear",
@@ -257,111 +387,129 @@ export default {
 					label: ""
 				}
 			]		
+		})
+
+		const insertItem = () => {
+			let node = null
+			let edge = null
+
+			switch(props.itemClass) {
+				case NodeClass.PHASE: node = _merge({}, store.getters.newPhase());break;
+				case NodeClass.GROUP: node = _merge({}, store.getters.newGroup());break;
+				case NodeClass.SUBGROUP: node = _merge({}, store.getters.newSubGroup());break;
+				case NodeClass.CONTEXT: node = _merge({}, store.getters.newContext());break;
+				case NodeClass.DATING: node = _merge({}, store.getters.newDating());break;
+				case NodeClass.PERIOD: node = _merge({}, store.getters.newPeriod());break;
+				case EdgeClass.EDGE: edge = _merge({}, store.getters.newEdge());break;							
+			}
+			if(node) {
+				store.dispatch('insertNode', node)
+				store.dispatch('setSelectedID', node.data.id)	
+			}	
+			else if(edge) {
+				store.dispatch('insertEdge', edge)
+				store.dispatch('setSelectedID', edge.data.id)	
+			}
 		}
-	},
-	mounted() {},
-	methods: {				
-		insertItem() {
-			let self = this
-			switch(self.itemClass) {
-				case NodeClass.PHASE: 
-					self.$store.dispatch('insertPhase'); break;
-				case NodeClass.GROUP: 
-					self.$store.dispatch('insertGroup'); break;
-				case NodeClass.SUBGROUP: 
-					self.$store.dispatch('insertSubGroup'); break;
-				case NodeClass.CONTEXT: 
-					self.$store.dispatch('insertContext'); break;
-				case NodeClass.DATING: 
-					self.$store.dispatch('insertDating'); break;	
-				case NodeClass.PERIOD: 
-					self.$store.dispatch('insertPeriod'); break;				
-			}
-		},
 
-		updateItem(item) {
+		const updateItem = (item) => {
 			if(item) {
-				if(this.itemClass == "edge")
-					this.$store.dispatch('updateEdge', item)
+				if(props.itemClass === EdgeClass.EDGE)
+					store.dispatch('updateEdge', item)
 				else
-					this.$store.dispatch('updateNode', item)
+					store.dispatch('updateNode', item)
 			}
+		}
 
-		},
-			
-		deleteItem(item) {
-			let self = this
-			self.$bvModal.msgBoxConfirm(`Delete ${ this.itemClass } "${item.data.label}" - are you sure?`)
+		const deleteItem = (item) => {
+			const msg = `Delete ${ props.itemClass } "${item.data.label}" - are you sure?`
+			context.root.$bvModal.msgBoxConfirm(msg)	// TODO: context.root is deprecated						
 				.then(value => { 
 					if(value) { 
-						this.$emit('itemDeleted', item.data.id)
-						if(this.itemClass == "edge")
-							this.$store.dispatch('deleteEdge', item)
+						context.emit('item-deleted', item.data.id)
+
+						if(props.itemClass == EdgeClass.EDGE)
+							store.dispatch('deleteEdge', item)
 						else
-							this.$store.dispatch('deleteNode', item)
+							store.dispatch('deleteNode', item)
 					}
 				})		
-		},
-		
-		/*selectItem(item) {
-			this.selectedID = item.data.id
-		},*/
-		
-		rowSelected(items) {
+		}
+
+		const rowSelected = (items) => {
 			if(items.length > 0) {
-				this.$emit('itemSelected', items[0])				
+				context.emit('item-selected', items[0])				
 			}	
-		},
-		tableSourceIdFormatter(value, key, item) {
-			return(this.$store.getters.nodeLabel(item.data.source, true))
-		},
-		tableTargetIdFormatter(value, key, item) {
-			return(this.$store.getters.nodeLabel(item.data.target, true))
-		},
-		// display node parent as label not id
-		tableParentFormatter(value, key, item) {
-			return(this.$store.getters.nodeLabel(item.data.parent, true))
-		},	
-		tablePeriodFormatter(value, key, item) {
-			return(this.$store.getters.nodeLabel(item.data.period, false))
-		},
-		tableMinYearFormatter(value, key, item) {
-			let dating = item.data.dating
-            let year = dating.minYear
-            let tolv = dating.minYearTolValue 						
-            let tolu = dating.minYearTolUnit
-            return this.tableYearFormat(year, tolv, tolu)
-        },
-        tableMaxYearFormatter(value, key, item) {
-			let dating = item.data.dating
-            let year = dating.maxYear
-            let tolv = dating.maxYearTolValue 						
-            let tolu = dating.maxYearTolUnit
-            return this.tableYearFormat(year, tolv, tolu)
-        },
-        tableYearFormat(year, tolv, tolu) {
+		}
+
+		// table formatters to display node labels instead of IDs
+		//const tableSourceIdFormatter = (value, key, item) => store.getters.labelByID(item.data.source, true)		
+		//const tableTargetIdFormatter = (value, key, item) => store.getters.labelByID(item.data.target, true)
+		//const tableParentFormatter = (value, key, item) => store.getters.labelByID(item.data.parent, true) 	
+		//const tablePeriodFormatter = (value, key, item) => store.getters.labelByID(item.data.period, false)
+
+		// table formatters for years
+		const tableYearFormat = (year, tolv, tolu) => {
             if(year == null || year == "")
 				return ""
 			else if(tolv == 0)
 				return Number(year) //`${year}`
 			else
 				return `${year}±${tolv}${tolu == "years" ? "y" : "%"}`
-        },
-		derivedMinYearFormatter(value, key, item) { 
-			return this.$store.getters.derivedDates(item.data.id).minYear 
-		},
-		derivedMaxYearFormatter(value, key, item) { 
-			return this.$store.getters.derivedDates(item.data.id).maxYear 
-		},
-		durationFormatter(value, key, item) {
-			return this.$store.getters.derivedDuration(item.data.id) 
-		},
-		enteredDiffFormatter(value, key, item) {
-			return this.$store.getters.enteredDuration(item.data.id) 
-			//let dating = this.$store.getters.enteredNodeDates(item.data.id)
-			//let dating = item.data.dating
-            //return (dating.maxYear !== null && dating.minYear !== null) ? (dating.maxYear - dating.minYear) + 1 : null
-		},
+        }
+		const tableMinYearFormat = (value, key, item) => {
+			let dating = item.data?.dating || {}
+            let year = dating.minYear
+            let tolv = dating.minYearTolValue 						
+            let tolu = dating.minYearTolUnit
+            return tableYearFormat(year, tolv, tolu)
+        }
+        const tableMaxYearFormat = (value, key, item) => {
+			let dating = item.data?.dating || {}
+            let year = dating.maxYear
+            let tolv = dating.maxYearTolValue 						
+            let tolu = dating.maxYearTolUnit
+            return tableYearFormat(year, tolv, tolu)
+        }
+        
+		const derivedMinYearFormat = (value, key, item) => store.getters.derivedDates(item.data.id).minYear 		
+		const derivedMaxYearFormat = (value, key, item) => store.getters.derivedDates(item.data.id).maxYear 		
+		const durationFormat = (value, key, item) => store.getters.derivedDuration(item.data.id) 		
+		const enteredDiffFormat = (value, key, item) => store.getters.enteredDuration(item.data.id) 
+		const derivedMinDurationFormat = (value, key, item) => store.getters.derivedMinDuration(item.data.id) 	
+		const derivedMaxDurationFormat = (value, key, item) => store.getters.derivedMaxDuration(item.data.id) 	
+			
+		return {
+			store,			
+			filter,
+			isBusy,
+			//selectedID,
+			sortBy,
+			sortDesc,
+			items,
+			columns,
+			fields,
+			perPage,
+			currentPage,
+			rowCount,
+			insertItem,
+			updateItem,
+			deleteItem,
+			copyToClipboard,
+			rowSelected,
+			rowClass,
+			filterCount,
+			onFiltered,
+			NodeClass,
+			tableMinYearFormat,
+			tableMaxYearFormat,
+			derivedMinYearFormat,
+			derivedMaxYearFormat,
+			derivedMinDurationFormat,
+			derivedMaxDurationFormat,
+			durationFormat,
+			enteredDiffFormat
+		}
 	}
 } 
 </script>
@@ -370,9 +518,14 @@ export default {
 	cursor: pointer;
 	color:dodgerblue;
 }
+a:hover {
+	color:red;
+}
 .action:hover {
 	color:red;
 }
-
+/deep/ .selected-row {
+	background-color: lightgray;
+}
 </style>
 
