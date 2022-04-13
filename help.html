@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="description" content="PHASER - stratigraphic matrix editing and analysis tool">
+    <meta name="author" content="Ceri Binding, University of South Wales, ceri.binding@southwales.ac.uk">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <link rel="icon" href="phaser-spacedout-p.ico" type="image/x-icon">    
+
+     <!-- Bootstrap CSS -->
+     <link rel="stylesheet" 
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" 
+      integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" 
+      crossorigin="anonymous">
+
+    <title>PHASER - Help</title>   
+
+    <style>
+      .container { 
+        display: grid; 
+        width: 80%;
+        margin-left: 10%;
+        margin-right: 10%;
+      }
+      .header, .footer { text-align: center; }
+      a:hover { color: red; } 
+      ul, li , a { margin: 0; padding: 0 }  
+      #app a { border: 2px solid red; position: absolute; }
+		  #app a:hover { border: 2px solid red; background: gray; opacity: 0.3;}	       
+    </style>
+
+  </head>
+  <body>
+    <div id="main" class="container">
+      <section class="header">
+        <img src="phaser-spacedout-logo.png" alt="PHASER"/>
+        <h1 class="title">stratigraphic matrix editing and analysis tool</h1>	
+        <hr>		
+      </section>
+
+      <div class="row">
+        <div class="col-4">
+          <h2 id="contents">Table of Contents</h2>
+      <ul>
+        <li><a href="#introduction">Introduction</a></li>        
+        <li>
+          <a href="#menu">Menu</a>
+          <ul>
+            <li><a href="#menu-file-new">File - New</a></li>
+            <li><a href="#menu-file-open">File - Open (JSON)</a></li>
+            <li><a href="#menu-file-save">File - Save (JSON)</a></li>
+            <li><a href="#menu-file-import-periodo">File - Import Perio.do collection</a></li>
+            <li><a href="#menu-file-import-csv">File - Import CSV</a></li>
+            <li><a href="#menu-file-export-csv">File - Export CSV</a></li>
+            <li><a href="#menu-file-export-visible-diagram">File - Export visible diagram (PNG)</a></li>
+            <li><a href="#menu-file-export-full-diagram">File - Export full diagram (PNG)</a></li>
+            <li><a href="#menu-view-zoom-in">View - Zoom in</a></li>
+            <li><a href="#menu-view-zoom-out">View - Zoom out</a></li>
+            <li><a href="#menu-view-zoom-fit">View - Zoom to fit</a></li>
+            <li><a href="#menu-view-refresh-diagram">View - Refresh diagram</a></li>
+            <li><a href="#menu-view-unlock-diagram">View - Lock/Unlock diagram</a></li>
+            <li><a href="#menu-view-redo-layout">View - Redo layout</a></li>
+            <li><a href="#menu-help">Help - Show help</a></li>
+          </ul>
+        </li>
+        <li><a href="#diagram">Matrix diagram</a></li>
+        <li>
+          <a href="#tabs">Tabs</a>
+          <ul>
+            <li><a href="#tab-phases">Phases<img class="px-1" src="phaser-icon-phase.png"/></a></li>
+            <li><a href="#tab-groups">Groups<img class="px-1" src="phaser-icon-group.png"/></a></li>
+            <li><a href="#tab-subgroups">Sub-Groups<img class="px-1" src="phaser-icon-subgroup.png"/></a></li>
+            <li><a href="#tab-contexts">Contexts<img class="px-1" src="phaser-icon-context.png"/><img class="px-1" src="phaser-icon-context-dated.png"/></a></li>
+            <li><a href="#tab-datings">Datings<img class="px-1" src="phaser-icon-dating.png"/></a></li>
+            <li><a href="#tab-periods">Periods<img class="px-1" src="phaser-icon-period.png"/></a></li>
+            <li><a href="#tab-stratigraphy">Stratigraphy</a></li>
+            <li><a href="#tab-validation">Validation</a></li>
+            <li><a href="#tab-temporal">Temporal</a></li>
+            <li><a href="#tab-metadata">Metadata</a></li>
+            <li><a href="#tab-search">Search (experimental)</a></li>
+            <li><a href="#tab-groupmatrix">Group Matrix (experimental)</a></li>
+          </ul>
+        </li>   
+        <li><a href="#year-ranges">Year ranges</a></li>     
+      </ul>
+      </div>
+       <div class="col-8">
+        <div style="position: relative;" id="app">
+          <img src="phaser-app.png" style="position: relative; width: 100%; border: 1px solid lightgray; margin: 0; padding: 0"/>
+          <a href="#menu" title="Menu" style="left: 0%; top: 0%; width: 17%; height:7%;"></a>	
+          <a href="#diagram" title="Matrix diagram" style="left: 0%; top: 6.7%; width: 47%; height:93%;"></a>
+          <a href="#tabs" title="Tabs" style="left: 47%; top: 6.7%; width: 53%; height:93%;"></a>
+          <a href="#menu-view-unlock-diagram" title="Lock/unlock diagram" style="left: 2.5%; top: 7.5%; width: 3%; height:3.5%;"></a>
+          <a href="#menu-view-refresh-diagram" title="Refresh diagram" style="left: 6%; top: 7.5%; width: 3%; height:3.5%;"></a>
+          <!--<div style="position: absolute; left: 30%; top: 20%; width: 10%; height:20%; border: black 1px solid; z-index: 0;"></div>-->
+        </div><!--.col-8-->			
+      </div></div>
+      
+      <hr>
+
+      <h2 id="introduction">Introduction</h2>
+      <p>The PHASER application was developed as part of the <a href="https://stratigraphic.github.io/matrix/">MATRIX project</a>, which investigates ways that digital data from archaeological excavations can be made more useful and re-usable for a range of users and audiences. The application is intended to aid in the editing and analysis of archaeological stratigraphic data. </p>
+      <p>The PHASER application requires a modern web browser to function correctly. At the time of writing it has been tested using the following browser versions:
+        <ul>
+          <li>Google Chrome - Version 100.0.4896.60 (Official Build) (64-bit)</li>
+          <li>Microsoft Edge - Version 100.0.1185.29 (Official build) (64-bit)</li>
+        </ul>
+      </p>
+      
+      <p>The user interface for the application is composed of a <a href="#menu">menu</a>, a <a href="#diagram">diagram</a> and a series of <a href="#tabs">tabs</a>, each of which are described in more detail in the following sections.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+      <hr>
+
+      <h2 id="menu">Menu</h2>      
+      <h3 id="menu-file-new">File - New</h3>
+      <p>This will clear any current data from the <a href="#tabs">tabs</a> and from the <a href="#diagram">diagram</a>. You will not be able to recover the deleted data unless it has been <a href="#menu-file-save">saved to a JSON file</a> first. A pop-up confirmation warning will be displayed before any data is cleared.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-file-open">File - Open (JSON)</h3>
+      <p>Opens a previously saved external JSON file compatible with the PHASER application. The JSON file stores the stratigraphic data, the diagram layout (current node positions) and any associated <a href="#tab-metadata">metadata</a>, for data interchange and backup purposes. You can also import and export data in <a href="#menu-file-import-csv">delimited text (CSV)</a> format.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-file-save">File - Save (JSON)</h3>
+      <p>Save all current matrix data to an external JSON file. NOTE: as this application runs within your browser the file saving location is governed by your browser configuration settings. The default setting for saving to external files <em>may</em> be to save directly to a downloads folder with no intervening prompt. If this is the case (as you will observe if you attempt to save your data) you can optionally change your browser settings to display a prompt to choose the location in which to save the file, and to change the generated file name before saving. On Google Chrome browser (as an example) this is under "settings - advanced - downloads". There is an option "ask where to save each file before downloading". Other browsers should have similar configuration settings.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-file-import-periodo">File - Import Perio.do collection</h3>
+      <p>Import a collection of named <a href="#tab-periods">periods</a> from the Perio.do gazetteer dataset. The entire dataset is downloaded from the Perio.do site and then the application allows you to choose a specific collection (or "authority") to import into your own dataset. It is possible to import more than one collection if required. Once imported the <a href="#tab-periods">periods</a> can be referenced from other elements within the application e.g. you can assign a <a href="#tab-phases">phase</a> to a specific period. Imported <a href="#tab-periods">periods</a> are included in the <a href="#menu-file-save">JSON file</a> when your matrix data is saved, so do not need to be subsequently re-imported. In the case that a suitable Perio.do collection does not already exist, you may also import your own set of periods from a <a href="#menu-file-import-csv">delimited text (CSV) file</a> instead.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-file-import-csv">File - Import CSV</h3>
+      <p>Import data from a delimited text (CSV) file. Delimited files are UTF-8 text files. Each row of the file represents a data record ending with a newline character, and a specific text character delimits the boundary between fields. The application supports several commonly used delimiter characters (tab, comma, semicolon, pipe, or space). A header row contains delimited field names. These required field names are case-sensitive (e.g. <var>siteCode</var> ≠ <var>SiteCode</var>), but the ordering of the fields within the file does not affect the import. Data field values are all case-sensitive. The following tables detail the required fields for each delimited file import.</p>
+      
+      <!--phases CSV-->
+      <table class="table table-sm table-striped">
+        <caption>Delimited data import/export format - <a href="#tab-phases">Phase records</a></caption>
+        <thead>
+          <th>Field name</th>
+          <th>Description</th>
+        </thead>
+        <tr>
+          <td>siteCode</td>
+          <td>Identifier of the site this <a href="#tab-phases">phase</a> falls within. There <em>may</em> be more than one site code used in the overall dataset, but an individual phase can only have one site code.</td>          
+        </tr>  
+        <tr>
+          <td>phaseID</td>
+          <td>Unique (within the site) identifier for this <a href="#tab-phases">phase</a></td>
+        </tr>   
+        <tr>
+          <td>minYear</td>
+          <td>Minimum year of the (entered) <a href="#year-ranges">year range</a> associated with this <a href="#tab-phases">phase</a>. Phases <em>should</em> define a <a href="#year-ranges">year range</a>, and the <a href="#tab-validation">validation</a> will flag up any which do not.</td>
+        </tr> 
+        <tr>
+          <td>maxYear</td>
+          <td>Maximum year of the (entered) <a href="#year-ranges">year range</a> associated with this <a href="#tab-phases">phase</a>. Phases <em>should</em> define a <a href="#year-ranges">year range</a>, and the <a href="#tab-validation">validation</a> will flag up any which do not.</td>
+        </tr>  
+        <tr>
+          <td>description</td>
+          <td>Textual description of the <a href="#tab-phases">phase</a></td>
+        </tr> 
+        <tr>
+          <td>withinPeriod</td>
+          <td>Identifier of the <a href="#tab-periods">named period</a> associated with this <a href="#tab-phases">phase</a>. Phases <em>should</em> be associated with a <a href="#tab-periods">period</a>, and the <a href="#tab-validation">validation</a> will flag up any which are not.</td>
+        </tr>      
+      </table>
+      <br>
+
+      <!--groups CSV-->
+      <table class="table table-sm table-striped">
+        <caption>Delimited data import/export format - <a href="#tab-groups">Group records</a></caption>
+        <thead>
+          <th>Field name</th>
+          <th>Description</th>
+        </thead>
+        <tr>
+          <td>siteCode</td>
+          <td>Identifier of the site this <a href="#tab-groups">group</a> falls within</td>          
+        </tr>  
+        <tr>
+          <td>groupID</td>
+          <td>Unique (within the site) identifier for this <a href="#tab-groups">group</a></td>
+        </tr>  
+        <tr>
+          <td>groupType</td>
+          <td>Type of <a href="#tab-groups">group</a> e.g. <em>"hearth", "well", "trench"</em> etc.</td>
+        </tr> 
+        <tr>
+          <td>cud</td>
+          <td>Construction/use/disuse indicator. Possible values: "", "C", "U", "D", "CU", "UD", "CD", "CUD"</td>
+        </tr>
+        <tr>
+          <td>description</td>
+          <td>Textual description of the <a href="#tab-groups">group</a></td>
+        </tr> 
+        <tr>
+          <td>withinPeriod</td>
+          <td>Identifier of the <a href="#tab-periods">period</a> associated with this <a href="#tab-groups">group</a>. Groups <em>should</em> be associated with a <a href="#tab-periods">period</a>, and the <a href="#tab-validation">validation</a> will flag up any which are not.</td>
+        </tr>   
+        <tr>
+          <td>withinPhase</td>
+          <td>Identifier of the <a href="#tab-phases">phase</a> this <a href="#tab-groups">group</a> falls within. Groups <em>must</em> be allocated to a <a href="#tab-phases">phase</a>, and the <a href="#tab-validation">validation</a> will flag up any which are not.</td>
+        </tr>    
+      </table>
+      <br>
+
+      <!--subgroups CSV-->
+      <table class="table table-sm table-striped">
+        <caption>Delimited data import/export format - <a href="#tab-subgroups">Sub-Group records</a></caption>
+        <thead>
+          <th>Field name</th>
+          <th>Description</th>
+        </thead>
+        <tr>
+          <td>siteCode</td>
+          <td>Identifier of the site this <a href="#tab-subgroups">subgroup</a> falls within</td>          
+        </tr>  
+        <tr>
+          <td>subgroupID</td>
+          <td>Unique (within the site) identifier for this <a href="#tab-subgroups">subgroup</a></td>
+        </tr>  
+        <tr>
+          <td>subgroupType</td>
+          <td>Type of <a href="#tab-subgroups">subgroup</a> e.g. <em>"hearth", "well", "trench"</em> etc.</td>
+        </tr> 
+        <tr>
+          <td>cud</td>
+          <td>Construction/use/disuse indicator. Possible values: "", "C", "U", "D", "CU", "UD", "CD", "CUD"</td>
+        </tr>
+        <tr>
+          <td>description</td>
+          <td>Textual description of the <a href="#tab-subgroups">subgroup</a></td>
+        </tr> 
+        <tr>
+          <td>withinPeriod</td>
+          <td>Identifier of the <a href="#tab-periods">period</a> associated with this <a href="#tab-subgroups">subgroup</a>. Subgroups <em>should</em> be associated with a <a href="#tab-periods">period</a>, and the <a href="#tab-validation">validation</a> will flag up any which are not.</td>
+        </tr>   
+        <tr>
+          <td>withinGroup</td>
+          <td>Identifier of the <a href="#tab-groups">group</a> this <a href="#tab-subgroups">subgroup</a> falls within. Subgroups <em>must</em> be allocated to a <a href="#tab-groups">group</a>, and the <a href="#tab-validation">validation</a> will flag up any which are not.</td>
+        </tr>    
+      </table>
+      <br>
+
+      <!--contexts CSV-->
+      <table class="table table-sm table-striped">
+        <caption>Delimited data import/export format - <a href="#tab-contexts">Context records</a></caption>
+        <thead>
+          <th>Field name</th>
+          <th>Description</th>
+        </thead>
+        <tr>
+          <td>siteCode</td>
+          <td>Identifier of the site this <a href="#tab-contexts">context</a> falls within</td>          
+        </tr>  
+        <tr>
+          <td>contextID</td>
+          <td>Unique (within the site) identifier for this <a href="#tab-contexts">context</a></td>
+        </tr>  
+        <tr>
+          <td>contextType</td>
+          <td>Type of <a href="#tab-contexts">context</a> e.g. <em>"layer", "cut", "fill"</em> etc. Contexts <em>should</em> have a type, and the <a href="#tab-validation">validation</a> will flag up any which do not.</td>
+        </tr> 
+        <tr>
+          <td>cud</td>
+          <td>Construction/use/disuse indicator. Possible values: "", "C", "U", "D", "CU", "UD", "CD", "CUD"</td>
+        </tr>
+        <tr>
+          <td>description</td>
+          <td>Textual description of the <a href="#tab-contexts">context</a></td>
+        </tr> 
+        <tr>
+          <td>withinPeriod</td>
+          <td>Identifier of the <a href="#tab-periods">period</a> associated with this <a href="#tab-contexts">context</a>. Contexts <em>should</em> be associated with a <a href="#tab-periods">period</a>, and the <a href="#tab-validation">validation</a> will flag up any which are not.</td>
+        </tr>
+        <tr>
+          <td>withinPhase</td>
+          <td>Identifier of the <a href="#tab-phases">phase</a> this <a href="#tab-contexts">context</a> falls within</td>
+        </tr>   
+        <tr>
+          <td>withinGroup</td>
+          <td>Identifier of the <a href="#tab-groups">group</a> this <a href="#tab-contexts">context</a> falls within</td>
+        </tr>  
+        <tr>
+          <td>withinSubgroup</td>
+          <td>Identifier of the <a href="#tab-subgroups">subgroup</a> this <a href="#tab-contexts">context</a> falls within</td>
+        </tr>  
+      </table>
+      <p>Note: fields withinPhase, withinGroup and withinSubgroup represent the containment grouping 'parent' - and are mutually exclusive for <a href="#tab-contexts">context</a>. Contexts must fall within a <a href="#tab-subgroups">subgroup</a>, or a <a href="#tab-groups">group</a>, or a <a href="#tab-phases">phase</a>, and the <a href="#tab-validation">validation</a> will flag up any which are not. If more than one of these fields is actually populated, then the order of preference for the parent element is: 1 - withinSubgroup, 2 - withinGroup, 3 - withinPhase.</p>
+      <br>
+
+      <!--context stratigraphy CSV-->
+      <table class="table table-sm table-striped">
+        <caption>Delimited data import/export format - <a href="#tab-stratigraphy">Context stratigraphy records</a></caption>
+        <thead>
+          <th>Field name</th>
+          <th>Description</th>
+        </thead>
+        <tr>
+          <td>siteCode</td>
+          <td>Identifier of the site this <a href="#tab-stratigraphy">stratigraphic record</a> relates to</td>          
+        </tr>  
+        <tr>
+          <td>sourceID</td>
+          <td>Identifier of the source <a href="#tab-context">context</a></td>
+        </tr>  
+        <tr>
+          <td>stratRelationship</td>
+          <td>Stratigraphic relationship (from source to target). Possible values: <em>"above"</em> (default), <em>"below", or "equal"</em>.</td>
+        </tr>           
+        <tr>
+          <td>targetID</td>
+          <td>Identifier of the target <a href="#tab-context">context</a></td>
+        </tr>    
+      </table>
+      <p>The <a href="#tab-stratigraphy">stratigraphy record</a> is a uni-directional relationship between <a href="#tab-contexts">contexts</a> (from source to target).</p>
+      <br>
+
+      <!--context stratigraphy (old) CSV-->
+      <table class="table table-sm table-striped">
+        <caption>Delimited data import/export format - <a href="#tab-contexts">Context stratigraphy records</a> (alternative '5 column' format)</caption>
+        <thead>
+          <th>Field name</th>
+          <th>Description</th>
+        </thead>
+        <tr>
+          <td>siteCode</td>
+          <td>Identifier of the site this <a href="#tab-stratigraphy">stratigraphic record</a> relates to</td>          
+        </tr>  
+        <tr>
+          <td>contextNo</td>
+          <td>Identifier of the source <a href="#tab-contexts">context</a></td>
+        </tr>  
+        <tr>
+          <td>contextType</td>
+          <td>Type of <a href="#tab-contexts">context</a> e.g. <em>"layer", "cut", "fill"</em> etc.</td>
+        </tr> 
+        <tr>
+          <td>stratRelationship</td>
+          <td>Stratigraphic relationship (from source to target). Possible values: <em>"above"</em> (default), <em>"below", or "equal"</em>.</td>
+        </tr>           
+        <tr>
+          <td>relatedContextNo</td>
+          <td>Identifier of the target <a href="#tab-contexts">context</a></td>
+        </tr>    
+      </table>
+      <p>An alternative <a href="#tab-stratigraphy">stratigraphy record</a> import format used in earlier work on the PHASER application, this option remains present for backward compatibility with earlier datasets already converted to this format for testing purposes.</p>
+      <br>
+
+      <!--datings CSV-->
+      <table class="table table-sm table-striped">
+        <caption>Delimited data import/export format - <a href="#tab-datings">Dating records</a></caption>
+        <thead>
+          <th>Field name</th>
+          <th>Description</th>
+        </thead>
+        <tr>
+          <td>siteCode</td>
+          <td>Identifier of the site this <a href="#tab-datings">Dating record</a> relates to</td>          
+        </tr>  
+        <tr>
+          <td>datingID</td>
+          <td>Unique (within the site) identifier for this <a href="#tab-datings">Dating record</a></td>
+        </tr>  
+        <tr>
+          <td>datingType</td>
+          <td>Type of <a href="#tab-datings">Dating record</a></td>
+        </tr> 
+        <tr>
+          <td>minYear</td>
+          <td>Minimum year of the (entered) <a href="#year-ranges">year range</a> for this <a href="#tab-datings">Dating record</a></td>
+        </tr>
+        <tr>
+          <td>maxYear</td>
+          <td>Maximum year of the (entered) <a href="#year-ranges">year range</a> for this <a href="#tab-datings">Dating record</a></td>
+        </tr>
+        <tr>
+          <td>description</td>
+          <td>Textual description of the <a href="#tab-datings">Dating record</a></td>
+        </tr> 
+        <tr>
+          <td>withinPeriod</td>
+          <td>Identifier of the <a href="#tab-periods">period</a> associated with this <a href="#tab-datings">Dating record</a></td>
+        </tr>   
+        <tr>
+          <td>withinContext</td>
+          <td>Identifier of the <a href="#tab-contexts">context</a> this <a href="#tab-datings">Dating record</a> falls within</td>
+        </tr>    
+      </table>
+      <br>
+
+      <!--periods CSV-->
+      <table class="table table-sm table-striped">
+        <caption>Delimited data import/export format - <a href="#tab-periods">Period records</a></caption>
+        <thead>
+          <th>Field name</th>
+          <th>Description</th>
+        </thead>
+        <tr>
+          <td>periodID</td>
+          <td>Unique (within the site) identifier for this <a href="#tab-periods">period</a> record</td>
+        </tr>  
+        <tr>
+          <td>minYear</td>
+          <td>Minimum year of the <a href="#year-ranges">year range</a> for this <a href="#tab-periods">period</a> record. Periods <em>should</em> define a <a href="#year-ranges">year range</a>, and the <a href="#tab-validation">validation</a> will flag up any which do not.</td>
+        </tr>
+        <tr>
+          <td>maxYear</td>
+          <td>Maxmum year of the <a href="#year-ranges">year range</a> for this <a href="#tab-periods">period</a> record. Periods <em>should</em> define a <a href="#year-ranges">year range</a>, and the <a href="#tab-validation">validation</a> will flag up any which do not.</td>
+        </tr>
+        <tr>
+          <td>description</td>
+          <td>Textual description of the <a href="#tab-periods">period</a> record</td>
+        </tr> 
+        <tr>
+          <td>uri</td>
+          <td>URI associated with this <a href="#tab-periods">period</a> record</td>
+        </tr>          
+      </table>
+      <p>An alternative to the CSV import is a pre-existing collection of periods <a href="#menu-file-import-periodo">imported from Perio.do</a>. Via either route the imported items will then be listed in the table under the <a href="#tab-periods">periods</a> tab.</p>
+      <br>
+      
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-file-export-csv">File - Export CSV</h3>
+      <p>Export data to a delimited text file. Refer to the tables above for a description of the fields that will be included in the output. Note the caveat about the saved files' location as described in <a href="#menu-file-save">file saving</a> also applies to delimited text files.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-file-export-visible-diagram">File - Export visible diagram (PNG)</h3>
+      <p>Save the currently visible portion of the matrix <a href="#diagram">diagram</a> to a PNG (Portable Network Graphics) format image file. Saving the currently visible portion allows you to <a href="#menu-view-zoom-in">zoom in</a> to a detailed area of particular interest on a larger <a href="#diagram">diagram</a> and save an image of just that area. Note the caveat about the saved files' location as described in <a href="#menu-file-save">file saving</a> also applies to PNG files.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-file-export-full-diagram">File - Export full diagram (PNG)</h3>
+      <p>Save the entire matrix <a href="#diagram">diagram</a> to a PNG (Portable Network Graphics) format image file. Note also the caveat about the saved files' location as described in <a href="#menu-file-save">file saving</a> also applies to PNG files.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-view-zoom-in">View - Zoom in</h3>
+      <p>Increase the scale of the <a href="#diagram">diagram</a> to 'zoom in' on a particular area. Note the same functionality can alternatively be achieved using the slider to the left side of the <a href="#diagram">diagram</a> (slide up to zoom in or click the '+' button at the top of the slider), or by using the mouse wheel if available. Zooming in will occur even if there are no elements currently present on the <a href="#diagram">diagram</a>. There is a predefined maximum zoom extent set to prevent zooming the <a href="#diagram">diagram</a> in too far.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-view-zoom-out">View - Zoom out</h3>
+      <p>Decrease the scale of the <a href="#diagram">diagram</a> to 'zoom out' to view a wider area. Note the same functionality can alternatively be achieved using the slider to the left side of the <a href="#diagram">diagram</a> (slide down to zoom out or click the '-' button at the bottom of the slider), or by using the mouse wheel if available. Zooming out will occur even if there are no elements currently present in the <a href="#diagram">diagram</a>. There is a predefined minimum zoom extent set to prevent zooming the diagram out too far, although this extent <em>may</em> be exceeded by the 'zoom to fit' function on a larger diagram.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-view-zoom-fit">View - Zoom to fit</h3>
+      <p>Increase or decrease the scale of the <a href="#diagram">diagram</a> to make all contents fit within the current window.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-view-refresh-diagram">View - Refresh diagram</h3>
+      <p>For performance reasons the <a href="#diagram">diagram</a> is not always kept in sync with changes being manually made to the underlying data. Periodically during data editing the <a href="#diagram">diagram</a> <em>may</em> go out of step with the data displayed in the <a href="#tabs">tabs</a> on the right hand side. This option will refresh the data shown in the <a href="#diagram">diagram</a>. The difference between this option and <a href="#menu-view-redo-layout">redo layout</a> is that refreshing the <a href="#diagram">diagram</a> only syncs the data, it does not perform any repositioning of elements.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-view-unlock-diagram">View - Lock/Unlock diagram</h3>
+      <p>By default the <a href="#diagram">diagram</a> is 'locked', preventing inadvertent repositioning of individual elements. Whilst locked the <a href="#diagram">diagram</a> can still be panned and zoomed as required. To change the position of an individual element on the <a href="#diagram">diagram</a> unlock the diagram, reposition the element, then lock the diagram again. Also the 'redo layout' functionality cannot be performed whilst the <a href="#diagram">diagram</a> is locked. The menu option will display either "Lock diagram" or "Unlock diagram" - depending on the current lock status.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-view-redo-layout">View - Redo layout</h3>
+      <p>This will recalculate ALL element positions according to the "DAGRE" directed graph layout algorithm. The layout functionality cannot be performed whilst the <a href="#diagram">diagram</a> is <a href="#menu-view-unlock-diagram">locked</a>, and the menu option will be disabled and greyed out accordingly. This option will automatically perform a <a href="#menu-view-refresh-diagram">refresh</a> to ensure the <a href="#diagram">diagram</a> data is up to date prior to re-calculating the element positions.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="menu-help">Help - Show help</h3>
+      <p>Displays this help documentation within a separate browser tab.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+      <hr>
+
+      <h2 id="diagram">Matrix diagram</h2>
+      <p>The diagram visually represents a matrix of <a href="#tab-contexts">contexts</a> and the stratigraphic relationships between them, plus containment within <a href="#tab-subgroups">subgroups</a>, <a href="#tab-groups">groups</a> and <a href="#tab-phases">phases</a>. There are pan/zoom controls to the left hand side, a button to <a href="#menu-view-unlock-diagram">lock/unlock</a> the diagram and a button to <a href="#menu-view-refresh-diagram">refresh</a> the diagram data. There is a small expandable legend at the top right of the diagram helping to distinguish the various elements shown on the diagram. The background of the diagram is a light grey grid which helps with the manual layout of elements, and elements when dragged will 'snap to' (align with) this grid, and will also display alignment guidelines. (Note you can only drag elements when the diagram is <a href="#menu-view-unlock-diagram">unlocked</a>).</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+      <hr>
+
+      <h2 id="tabs">Tabs</h2>
+      <p>The tabs hold data about the elements of the stratigraphic graph - <a href="#tab-phases">phases</a>, <a href="#tab-groups">groups</a>, <a href="#tab-subgroups">subgroups</a>, <a href="#tab-contexts">contexts</a>, <a href="#tab-datings">datings</a>, <a href="#tab-periods">periods</a> and <a href="#tab-stratigraphic">stratigraphic relationships</a> - allowing reviewing and editing. Each of these tabs also displays a total count of the elements of this type in the title. In addition there are tabs for <a href="#tab-validation">validation</a>, analysis of <a href="#tab-temporal">temporal relationships</a>, <a href="#tab-metadata">metadata</a> about the current dataset, <a href="#tab-search">search</a> and <a href="#tab-groupmatrix">group matrix</a> data. The tabs react to selection of elements (either in the diagram, or in the table, or in other tabs) to display the details of the currently selected element, allowing viewing and editing of the data.</p>
+
+      <h3 id="tab-phases">Phases<img class="px-1" src="phaser-icon-phase.png"/></h3>
+      <p>The table lists all phase records in the current dataset, table columns can be sorted and the data can be filtered. Phases can be added, edited or deleted. A <a href="#year-ranges">year range</a> can be manually set for a phase, and compared to the year range derived from any dating elements hierarchically "within" the phase.  Phases <em>should</em> define a <a href="#year-ranges">year range</a>, and the <a href="#tab-validation">validation</a> will flag up any which do not.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="tab-groups">Groups<img class="px-1" src="phaser-icon-group.png"/></h3>
+      <p>The table lists all group records in the current dataset, table columns can be sorted and the data can be filtered. Groups can be added, edited or deleted.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="tab-subgroups">Sub-Groups<img class="px-1" src="phaser-icon-subgroup.png"/></h3>
+      <p>The table lists all sub-group records in the current dataset, table columns can be sorted and the data can be filtered. Sub-groups can be added, edited or deleted. </p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="tab-contexts">Contexts<img class="px-1" src="phaser-icon-context.png"/><img class="px-1" src="phaser-icon-context-dated.png"/></h3>
+      <p>The table lists all context records in the current dataset, table columns can be sorted and the data can be filtered. Contexts can be added, edited or deleted. The context icon colours (black text on white background) are reversed to white text on black background for any contexts having one or more associated dating records.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="tab-datings">Datings<img class="px-1" src="phaser-icon-dating.png"/></h3>
+      <p>The table lists all dating records in the current dataset, table columns can be sorted and the data can be filtered. Dating records can be added, edited or deleted.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="tab-periods">Periods<img class="px-1" src="phaser-icon-period.png"/></h3>
+      <p>The table lists all named periods in the current dataset, table columns can be sorted and the data can be filtered. Period records can be added, edited or deleted. A <a href="#year-ranges">year range</a> can be manually set for a period. Periods <em>should</em> define a <a href="#year-ranges">year range</a>, and the <a href="#tab-validation">validation</a> will flag up any which do not.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="tab-stratigraphy">Stratigraphy</h3>
+      <p>The table lists all stratigraphic relationships in the current dataset, table columns can be sorted and the data can be filtered. New stratigraphic relationships can be added or existing relationships deleted.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="tab-validation">Validation</h3>
+      <p>Various pre-defined validation checks can be performed on <a href="#tab-phases">phases</a>, <a href="#tab-groups">groups</a>, <a href="#tab-subgroups">subgroups</a>, <a href="#tab-contexts">contexts</a> and <a href="#tab-periods">periods</a> to assist in improving consistency. The validation results are colour coded to indicate where there may be potential problems within the dataset. For mandatory tests ("MUST") the colour will be green (with an accompanying tick) when all elements have passed the validation check, and red (with an accompanying cross) where one or more elements have failed the test. For optional tests ("SHOULD") the colour will be green (with an accompanying tick) when all elements have passed the validation check, and yellow (with an accompanying cross) where one or more elements have failed the test. Tests that have not yet been run, or have no eligible elements will be coloured white. These validation checks can be re-run after changes are made to the underlying data. The results of each test can be expanded to view (and navigate to) any elements that have failed a particular validation check.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="tab-temporal">Temporal</h3>
+      <p>Tables displaying temporal and stratigraphic relationships between elements. The first table (derived temporal relationships) shows temporal relationships between ALL elements hierarchically contained within the selected <a href="#tab-phases">phase</a>, regardless of whether they are related stratigraphically or not. Relationships can only be shown between elements that have a derived <a href="#year-ranges">year range</a>. The second table (derived stratigraphic relationships) shows temporal vs (direct or derived) stratigraphic relationships for elements contained within the selected <a href="#tab-phases">phase</a>. Colour coding of table rows is used to indicate where there is a divergence between what the stratigraphy says and what the <a href="#tab-datings">dating</a> evidence says. This helps to visualise whether the <a href="#tab-stratigraphy">stratigraphic relationships</a> are fully supported by the <a href="#tab-datings">dating</a> evidence (and vice versa). There is an accompanying key to explain this colour coding.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="tab-metadata">Metadata</h3>
+      <p>General metadata describing (and stored with) the current dataset - fields contained within this section are optional. It is useful to record some supplementary metadata to keep track of the origins of the dataset, any revisions that may have been made, and suitable licensing and contact details for sharing the data with others. There is a read-only field listing any site codes used in the current data (there may be zero, one or many site codes). The other fields (title, description, creator, email, license, version) are all editable.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="tab-search">Search (experimental)</h3>
+      <p>Search facilities to identify groups of elements based on hierarchical containment relationships (e.g. find all <a href="#tab-contexts">contexts</a> and/or <a href="#tab-subgroups">subgroups</a> within a particular <a href="#tab-phases">phase</a>). You can select the type(s) of element you want to find, optionally limit the search to within a particular container element (i.e. a <a href="#tab-phases">phase</a>, a <a href="#tab-groups">group</a> or a <a href="#tab-subgroups">subgroup</a>), or related to a particular <a href="#tab-periods">period</a>. Once the search has been performed, you can sort and filter the results, and copy the results table to the clipboard.</p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small>
+
+      <h3 id="tab-groupmatrix">Group Matrix (experimental)</h3>
+      <p>The group matrix represents derived stratigraphic relationships between <a href="#tab-groups">groups</a>, these are determined based on the <a href="#tab-stratigraphy">stratigraphic relationships</a> between the contained <a href="#tab-contexts">contexts</a>. The table lists these derived relationships with colour coding indicating any possible conflict between stratigraphic and temporal relationships. There is an accompanying key to explain this colour coding. The table data can be copied to the clipboard. Below the table is a small group matrix diagram for visualizing the groups and the derived relationships between them.</p>      
+      <small><a href="#main" class="float-end">[Back to top]</a></small> 
+      
+
+      <h3 id="year-ranges">Year Ranges</h3>
+      <p>Year ranges in the PHASER application are expressed relative to Common Era (CE), as a range from minimum (earliest) year to maximum (latest) year. Within tables these may be displayed either in individual named fields or as a single range value e.g. "1673 &rarr; 1730 (58)" - note the calculated duration in years (shown in brackets) spans from the start of the earliest year to the end of the latest year. Positive numbers represent CE years, and negative numbers represent BCE years. Derived date ranges are hierarchically calculated for <a href="#tab-phases">phases</a>, <a href="#tab-groups">groups</a>, <a href="#tab-subgroups">subgroups</a> and <a href="#tab-contexts">contexts</a> - based on any dating records assigned to the contexts. Date ranges can also be manully entered for <a href="#tab-phases">phases</a>, <a href="#tab-datings">dating records</a> and <a href="#tab-periods">periods</a>. It is possible to retain a particular year range in the data but to exclude it from any subsequent calculations.</p>
+      <img src="year-range-editing.png"/>
+      <br>
+      <p>When entering year range extents, type a positive number and use the button to the right of the field to toggle between "CE" or "BCE" as appropriate. It is also possible to include an optional plus/minus (&plusmn;) tolerance for the year values. Where required the tolerance may be expressed either as a number of years or as a percentage, and will then be displayed in tables as e.g. "1695&plusmn;10y" or "1695&plusmn;10%". The entered tolerance will also be accounted for in the calculation of durations, and in determining the temporal relationships between year ranges. </p>
+
+      </p>
+      <small><a href="#main" class="float-end">[Back to top]</a></small> 
+      <hr>
+
+      <section class="footer">
+        <small class="footer">PHASER - stratigraphic matrix editing and analysis tool</small>			
+      </section>
+    </div>
+  </body>
+</html>
